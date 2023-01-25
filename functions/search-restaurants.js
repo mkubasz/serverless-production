@@ -24,9 +24,9 @@ module.exports.handler = async (event, context) => {
     const req = JSON.parse(event.body);
     const theme = req.theme;
     const restaurants = await findRestaurantsByTheme(theme, defaultResults);
-    const response = {
+    return {
         statusCode: 200,
-        body: JSON.stringify(restaurants)
+        body: JSON.stringify(restaurants),
+        isBase64Encoded: false
     };
-    return response;
 }

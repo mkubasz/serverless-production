@@ -5,9 +5,16 @@ const _ = require('lodash');
 
 const mode = process.env.TEST_MODE;
 
+const parser = async (response) => {
+    const result = await response.text();
+    if(response.headers.get('content-type').includes('application/json')) {
+        return JSON.parse(result);
+    }
+    return result;
+}
 const respondFrom = async (response) => ({
     statusCode: response.status,
-    body: response.body,
+    body: await parser(response),
     headers: response.headers
 });
 
@@ -28,7 +35,6 @@ const viaHttp = async (path, method, opts) => {
     console.log(`Invoking ${url} via HTTP`);
 
     try {
-        const data = _.get(opts, 'body', {});
         let headers = {};
         if (_.get(opts, 'iam_auth', false)) {
             headers = signHttpRequest(url);
@@ -39,13 +45,17 @@ const viaHttp = async (path, method, opts) => {
             headers.Authorization = authHeader;
         }
 
-        const httpReg = await fetch(url, {
+        const data = _.get(opts, 'body', {});
+        const init = {
             method,
-            headers,
-            body: JSON.stringify(data)
-        });
-        const res = await httpReg.json();
-        return respondFrom(res);
+            headers
+        };
+
+        if(method !== 'get') {
+            init.body = JSON.stringify(JSON.parse(data));
+        }
+        const httpReg = await fetch(url, init);
+        return respondFrom(httpReg);
     } catch (err) {
         if(err.status) {
             return {
@@ -63,7 +73,7 @@ const viaHandler = async (event, functionName) => {
 
     const context = {};
     const response = await handler(event, context);
-    const contentType = _.get(response, 'headers.Content-Type', 'application/json');
+    const contentType = _.get(response, 'headers.content-type', 'application/json');
     if (response.body && contentType.includes('application/json')) {
         response.body = JSON.parse(response.body);
     }
@@ -82,13 +92,28 @@ const we_invoke_get_index = async () =>
     }
 }
 
-const we_invoke_get_restaurants = async () => viaHandler({}, 'get-restaurants');
-
-const we_invoke_search_restaurants = async theme => {
-    const event = {
-        body: JSON.stringify({ theme }),
+const we_invoke_get_restaurants = async () => {
+    switch (mode) {
+        case 'handler':
+            return await viaHandler({}, 'get-restaurants');
+        case 'http':
+            return await viaHttp('restaurants', 'get', { iam_auth: true });
+        default:
+            throw new Error(`Invalid mode: ${mode}`);
     }
-    return await viaHandler(event, 'search-restaurants');
+}
+
+const we_invoke_search_restaurants = async (theme, user) => {
+    const body = JSON.stringify({ theme });
+    switch (mode) {
+        case 'handler':
+            return await viaHandler(body, 'search-restaurants');
+        case 'http':
+            const auth = user.idToken;
+            return await viaHttp('restaurants/search', 'post', { body, auth })
+        default:
+            throw new Error(`Invalid mode: ${mode}`);
+    }
 };
 
 module.exports = {

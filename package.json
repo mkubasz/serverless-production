@@ -5,12 +5,14 @@
   "main": "index.js",
   "scripts": {
     "dotEnv": "sls export-env --all",
-    "test": "npm run dotEnv && cross-env TEST_MODE=handler jest --silent"
+    "test": "npm run dotEnv && cross-env TEST_MODE=handler jest --silent",
+    "test:acceptance": "npm run dotEnv && cross-env TEST_MODE=http jest"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.258.0",
     "@aws-sdk/client-dynamodb": "3.252.0",
     "@aws-sdk/util-dynamodb": "^3.252.0",
     "@types/jest": "^29.2.6",
@@ -25,6 +27,7 @@
   },
   "dependencies": {
     "aws4": "^1.12.0",
+    "chance": "^1.1.9",
     "lodash": "^4.17.21",
     "mustache": "^4.2.0"
   }
