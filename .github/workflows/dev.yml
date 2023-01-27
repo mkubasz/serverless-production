@@ -38,7 +38,7 @@ jobs:
         run: npx sls deploy --stage ci-dev
 
       - name: Export env for ci-dev
-        run: npx sls export-env --all --stage ci-dev --output .env
+        run: npx sls export-env --all --stage ci-dev
 
       - name: Run integration tests
         run: npx cross-env TEST_MODE=handler jest --silent
