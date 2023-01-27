@@ -20,6 +20,15 @@ provider:
         - Effect: Allow
           Action: execute-api:Invoke
           Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayRestApi}/${sls:stage}/GET/restaurants
+        - Effect: Allow
+          Action: ssm:GetParameters*
+          Resource:
+            - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${sls:stage}/get-restaurants/config
+            - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${sls:stage}/search-restaurants/config
+            - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${self:service}/${sls:stage}/search-restaurants/secretString
+        - Effect: Allow
+          Action: kms:Decrypt
+          Resource: ${ssm:/${sls:stage}/kmsArn}
   environment:
     rest_api_url:
         Fn::Join:
@@ -27,6 +36,8 @@ provider:
             - - https://
               - !Ref ApiGatewayRestApi
               - .execute-api.${aws:region}.amazonaws.com/${sls:stage}
+    serviceName: ${self:service}
+    stage: ${sls:stage}
 functions:
   get-index:
     handler: functions/get-index.handler
@@ -99,6 +110,17 @@ resources:
           - ALLOW_ADMIN_USER_PASSWORD_AUTH
           - ALLOW_REFRESH_TOKEN_AUTH
         PreventUserExistenceErrors: ENABLED
+    ServiceUrlParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Type: String
+        Name: /${self:service}/${sls:stage}/serviceUrl
+        Value:
+          Fn::Join:
+            - ''
+            - - https://
+              - !Ref ApiGatewayRestApi
+              - .execute-api.${aws:region}.amazonaws.com/${sls:stage}
     CognitoUserPool:
       Type: AWS::Cognito::UserPool
       Properties:
