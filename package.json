@@ -6,7 +6,8 @@
   "scripts": {
     "dotEnv": "sls export-env --all",
     "test": "npm run dotEnv && cross-env TEST_MODE=handler jest --silent",
-    "test:acceptance": "npm run dotEnv && cross-env TEST_MODE=http jest"
+    "test:acceptance": "npm run dotEnv && cross-env TEST_MODE=http jest",
+    "seed": "cross-env node seed-restaurants.js"
   },
   "keywords": [],
   "author": "",
