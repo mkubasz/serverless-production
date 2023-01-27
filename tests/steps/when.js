@@ -107,7 +107,7 @@ const we_invoke_search_restaurants = async (theme, user) => {
     const body = JSON.stringify({ theme });
     switch (mode) {
         case 'handler':
-            return await viaHandler(body, 'search-restaurants');
+            return await viaHandler( { body }, 'search-restaurants');
         case 'http':
             const auth = user.idToken;
             return await viaHttp('restaurants/search', 'post', { body, auth })
