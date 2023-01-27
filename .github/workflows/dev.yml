@@ -30,14 +30,24 @@ jobs:
           aws-region: us-east-1
           role-to-assume: arn:aws:iam::133506990706:role/GitHubActionsRole
           role-session-name: GithubActionsSession
+
       - name: Install dependencies
         run: npm ci
 
+      - name: Deploy to temporary stage called 'ci-dev'
+        run: npx sls deploy --stage ci-dev
+
+      - name: Export env for ci-dev
+        run: npx sls export-env --all --stage ci-dev --output .env
+
       - name: Run integration tests
-        run: npm run test
+        run: npx cross-env TEST_MODE=handler jest --silent
+
+      - name: Run acceptance tests
+        run: npx cross-env TEST_MODE=http jest --silent
+
+      - name: Remove temporary stage called 'ci-dev'
+        run: npx sls remove --stage ci-dev
 
       - name: Deploy to dev
         run: npx sls deploy
-
-      - name: Run acceptance tests
-        run: npm run test:acceptance
